@@ -48,7 +48,17 @@
         color: #ddd;
         padding-bottom: 1px;
     }
-    
+    .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1;
+            right: 0; 
+            top: 0;
+            width: 300px; 
+            height: 100%; 
+            background-color: rgba(255, 255, 255, 1); 
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+        }
     .payment-methods{
         height: 85px; 
     }
@@ -123,9 +133,38 @@
                                 <li class="nav-item d-flex flex-row">
 
                                     <a class="nav-link text-white" href="./login.html"><i class="bi bi-person text-center fs-3 d-flex flex-column"></i>Cuenta</a>
-                                    <a class="nav-link text-white mx-3" href=""><i class="bi bi-cart4 text-center fs-3 d-flex flex-column"></i>Carrito</a>
+                                    <a class="nav-link text-white" href="#"><i class="bi bi-cart4 text-center fs-3 d-flex flex-column model" id="myBtn"></i>Carrito</a>
                                 </li>
                             </ul>
+                            <div id="myModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close"><button>Cerrar</button></span>
+                                    <h2>Contenido</h2>
+                                    <ul id="carrito"></ul>
+                                    <p id="total">Total: $0</p>
+                                </div>
+                            </div>
+                            <script>
+                
+                                var modal = document.getElementById("myModal");
+              
+                                var btn = document.getElementById("myBtn");
+                                
+                                var span = document.getElementsByClassName("close")[0];
+                                btn.onclick = function() {
+                                    modal.style.display = "block";
+                                }
+              
+                                span.onclick = function() {
+                                    modal.style.display = "none";
+                                }
+              
+                                window.onclick = function(event) {
+                                    if (event.target == modal) {
+                                        modal.style.display = "none";
+                                    }
+                                }
+                            </script>
                         </div>
                     </div>
                     <hr class="border border-1 border-white my-0" style="width: 100%;">
@@ -179,6 +218,7 @@
                 <div id="contenedorFoo"></div>
             </div>
         </div>
+        <script src="./car.js"></script>
         <script src="./contenido.js"></script>
         <script src="./productos.js"></script>
         <script src="./busqueda.js"></script>

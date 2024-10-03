@@ -9,15 +9,21 @@ fetch('./productos.json')
             const productoDiv = document.createElement('div');
             productoDiv.className = 'col-lg-4 col-md-4 col-sm-4 mb-4';
             productoDiv.innerHTML = `
-                  <div class="card text-center" style="width: 19em;">
-                   <img src="${producto.imageUrl}" class="card-img-top mb-2" style="box-shadow: 0px 1px 0px 0px rgba(213,213,213,0.90);" alt="">
-                    <div class="card-body p-0 " style="height: 180px; padding-bottom: 15px;">
-                        <h5 class="card-title">${producto.nombre}</h5>
-                        <p class="card-text pb-3">${producto.descripcion}</p>
-                        <strong><p class="card-text fs-4">$${producto.precio}</p></strong>
+                  <div class="card text-center h-100">
+                <img src="${producto.imageUrl || 'placeholder.jpg'}" class="card-img-top" alt="${producto.nombre}">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">${producto.nombre}</h5>
+                    <p class="card-text flex-grow-1">${producto.descripcion}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <strong class="fs-4 mx-auto">$${producto.precio}</strong>
+                        <div>
+                            <button class="btn btn-outline-success me-2 p-2"><i class="bi bi-cash"></i></button>
+                            <button id="boton" onclick="agregarProducto()" class="btn btn-outline-primary p-2"><i class="bi bi-cart4"></i></button>
+                        </div>
                     </div>
-                <a href="#" class="btn btn-primary mb-2 mt-3" style="width: 200px; align-self: center;">Comprar</a>
-            </div>`;
+                </div>
+            </div>
+        `;
 
             contenedor.appendChild(productoDiv);
         });

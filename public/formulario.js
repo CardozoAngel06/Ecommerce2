@@ -2,8 +2,7 @@ async function cargarProductos() {
     try {
         const response = await fetch('./productos.json');
         if (!response.ok) throw new Error('Error en la respuesta de la red');
-        const data = await response.json();
-        return data;
+        return await response.json();
     } catch (error) {
         console.error('Error cargando los productos:', error);
         return [];
@@ -20,15 +19,16 @@ function displayProducts(products) {
 
         productDiv.innerHTML = `
             <div class="card text-center h-100">
-                <img src="${producto.imageUrl}" class="card-img-top" alt="${producto.nombre}">
+                <img src="${producto.imageUrl || 'placeholder.jpg'}" class="card-img-top" alt="${producto.nombre}">
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">${producto.nombre}</h5>
                     <p class="card-text flex-grow-1">${producto.descripcion}</p>
+                    <h6 class="card-text flex-grow-1"><strong>Unidades disponibles: ${producto.stock}</strong></h6>
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <strong class="fs-4 mx-auto">$${producto.precio}</strong>
                         <div>
-                            <a href="#" class="btn btn-outline-primary me-2 p-2 edit-btn" data-id="${producto.id}"><i class="bi bi-pencil"></i></a>
-                            <a href="#" class="btn btn-outline-danger p-2"><i class="bi bi-trash3-fill"></i></a>
+                            <button class="btn btn-outline-primary me-2 p-2 edit-btn" data-id="${producto.id}"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger p-2"><i class="bi bi-trash3-fill"></i></button>
                         </div>
                     </div>
                 </div>
@@ -56,8 +56,7 @@ function searchProducts(query) {
 
 // Evento para manejar la búsqueda
 document.getElementById('searchInput').addEventListener('input', (event) => {
-    const query = event.target.value;
-    searchProducts(query);
+    searchProducts(event.target.value);
 });
 
 // Manejar clic en el botón de edición y eliminación
@@ -67,9 +66,10 @@ document.addEventListener('click', async (event) => {
         const producto = productState.products.find(p => p.id == productId);
 
         if (producto) {
-            console.log('Editando producto:', producto);
             document.getElementById('editNombre').value = producto.nombre;
             document.getElementById('editDescripcion').value = producto.descripcion;
+            document.getElementById('editCategoria').value = producto.categoria;
+            document.getElementById('editStock').value = producto.stock;
             document.getElementById('editPrecio').value = producto.precio;
             document.getElementById('editId').value = producto.id;
 
@@ -78,27 +78,21 @@ document.addEventListener('click', async (event) => {
         }
     }
 
-    // Manejar clic en el botón de eliminación
     if (event.target.closest('.btn-outline-danger')) {
         const productId = event.target.closest('.btn-outline-danger').parentElement.querySelector('.edit-btn').getAttribute('data-id');
 
-        const confirmDelete = confirm("¿Estás seguro de que deseas eliminar este producto?");
-        if (confirmDelete) {
+        if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
             try {
                 const response = await fetch(`/Productos/${productId}`, {
                     method: 'DELETE',
                 });
 
                 if (response.ok) {
-                    const deletedProduct = await response.json();
-                    alert(deletedProduct.Mensaje);
-                    
-                    // Eliminar el producto del estado local
+                    alert('Producto eliminado con éxito');
                     productState.products = productState.products.filter(p => p.id != productId);
-                    displayProducts(productState.products); // Refrescar la visualización
+                    displayProducts(productState.products);
                 } else {
-                    const error = await response.json();
-                    alert(error);
+                    alert('Error al eliminar el producto. Inténtalo más tarde.');
                 }
             } catch (error) {
                 alert('Error al eliminar el producto. Por favor, inténtelo más tarde.');
@@ -107,47 +101,81 @@ document.addEventListener('click', async (event) => {
     }
 });
 
-// Manejar el envío del formulario de edición
-document.getElementById('editProductForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    console.log('Enviando formulario de edición');
+document.getElementById('addProductBtn').addEventListener('click', () => {
+    const modal = new bootstrap.Modal(document.getElementById('addProductForm'));
+    modal.show();
+});
 
-    const id = document.getElementById('editId').value;
-    const nombre = document.getElementById('editNombre').value;
-    const descripcion = document.getElementById('editDescripcion').value;
-    const precio = document.getElementById('editPrecio').value;
+document.getElementById('addProductForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const nuevoProducto = {
+        nombre: document.getElementById('addNombre').value,
+        descripcion: document.getElementById('addDescripcion').value,
+        categoria: document.getElementById('addCategoria').value,
+        stock: document.getElementById('addStock').value,
+        precio: document.getElementById('addPrecio').value,
+    };
 
     try {
-        const response = await fetch(`/Productos/${id}`, {
+        const response = await fetch('/Productos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(nuevoProducto),
+        });
+
+        if (response.ok) {
+            const newProduct = await response.json();
+            productState.products.push(newProduct.Producto);
+            displayProducts(productState.products);
+            alert('Producto agregado con éxito');
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addProductForm'));
+            modal.hide();
+            document.getElementById('addProductForm').reset();
+        } else {
+            alert('Error al agregar el producto. Por favor, inténtelo más tarde.');
+        }
+    } catch (error) {
+        alert('Error al agregar el producto. Por favor, inténtelo más tarde.');
+    }
+});
+
+document.getElementById('editProductForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const updatedProduct = {
+        id: document.getElementById('editId').value,
+        nombre: document.getElementById('editNombre').value,
+        descripcion: document.getElementById('editDescripcion').value,
+        categoria: document.getElementById('editCategoria').value,
+        stock: document.getElementById('editStock').value,
+        precio: document.getElementById('editPrecio').value,
+    };
+
+    try {
+        const response = await fetch(`/Productos/${updatedProduct.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ nombre, descripcion, precio }),
+            body: JSON.stringify(updatedProduct),
         });
 
         if (response.ok) {
-            const updatedProduct = await response.json();
-            alert(updatedProduct.mensaje);
+            const index = productState.products.findIndex(p => p.id == updatedProduct.id);
+            productState.products[index] = updatedProduct; 
+            displayProducts(productState.products);
+            alert('Producto actualizado con éxito');
 
-            // Actualizar el producto en el estado local
-            const index = productState.products.findIndex(p => p.id == id);
-            if (index !== -1) {
-                productState.products[index] = { id, nombre, descripcion, precio };
-                displayProducts(productState.products); // Refrescar la visualización
-            } else {
-                console.error('Producto no encontrado para actualizar');
-            }
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editForm'));
+            modal.hide();
         } else {
-            const error = await response.json();
-            console.error('Error al actualizar el producto:', error);
-            alert(error);
+            alert('Error al actualizar el producto. Por favor, inténtelo más tarde.');
         }
     } catch (error) {
-        console.error('Error al enviar el formulario:', error);
         alert('Error al actualizar el producto. Por favor, inténtelo más tarde.');
     }
-
-    const modal = bootstrap.Modal.getInstance(document.getElementById('editForm'));
-    modal.hide();
 });
